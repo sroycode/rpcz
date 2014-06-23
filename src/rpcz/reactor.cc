@@ -71,6 +71,13 @@ int reactor::loop() {
       is_dirty_ = false;
     }
     long poll_timeout = process_closure_run_map();
+
+		// zmq3 patch
+    if (ZMQ_VERSION_MAJOR >= 3 && poll_timeout > 0)
+    {
+      poll_timeout /= 1000;
+    }
+
     int rc = zmq_poll(&pollitems_[0], pollitems_.size(), poll_timeout);
 
     if (rc == -1) {
