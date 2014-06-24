@@ -72,12 +72,6 @@ int reactor::loop() {
     }
     long poll_timeout = process_closure_run_map();
 
-		// zmq3 patch
-    if (ZMQ_VERSION_MAJOR >= 3 && poll_timeout > 0)
-    {
-      poll_timeout /= 1000;
-    }
-
     int rc = zmq_poll(&pollitems_[0], pollitems_.size(), poll_timeout);
 
     if (rc == -1) {
@@ -115,7 +109,12 @@ long reactor::process_closure_run_map() {
   }
   long poll_timeout = -1;
   if (ub != closure_run_map_.end()) {
-    poll_timeout = 1000 * (ub->first - now);
+		// zmq3 patch
+    if (ZMQ_VERSION_MAJOR >= 3) {
+    	poll_timeout = ub->first - now;
+    } else {
+    	poll_timeout = 1000 * (ub->first - now);
+		}
   }
   closure_run_map_.erase(closure_run_map_.begin(), ub);
   return poll_timeout;
