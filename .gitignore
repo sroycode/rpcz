@@ -1,5 +1,6 @@
 .clang_complete
 build
+cmake.sh
 *.pyc
 *_pb2.py
 *_rpcz.py
