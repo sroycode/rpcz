@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 // Author: S Roychowdhury <sroycode@gmail.com>
+// @brief: shared application
 
 #include <iostream>
 #include <boost/lexical_cast.hpp>
@@ -50,17 +51,13 @@ private:
 	rpcz::application* application;
 	rpcz::rpc_channel* channel;
 public:
-	fclient(zmq::context_t* context) {
-		rpcz::application::options options;
-		options.zeromq_context = context;
-		options.zeromq_io_threads = 1;
-		options.connection_manager_threads = 1; // ignored
-		application = new rpcz::application(options);
-  	channel = application->create_rpc_channel(USE_ADDRESS);
-	}
+	fclient(rpcz::application* application_)
+		: application(application_),
+  	channel(application->create_rpc_channel(USE_ADDRESS))
+	{}
+
 	~fclient() {
 		delete channel;
-		delete application;
 	}
 	void send(std::string inss) {
 		try {
@@ -84,16 +81,8 @@ class fserver {
 private:
 	rpcz::application* application;
 public:
-	fserver(zmq::context_t* context) {
-		rpcz::application::options options;
-		options.zeromq_context = context;
-		options.zeromq_io_threads = 1;
-		options.connection_manager_threads = 1; // ignored
-		application = new rpcz::application(options);
-	}
-	~fserver() {
-		delete application;
-	}
+	fserver(rpcz::application* application_) : application(application_) {}
+	~fserver() {}
 	void run() {
 		rpcz::server server(*application);
 		examples::SearchServiceImpl search_service;
@@ -112,13 +101,18 @@ int main()
 {
 
 	zmq::context_t* context = new zmq::context_t(2);
+	rpcz::application::options options;
+	options.zeromq_context = context;
+	options.zeromq_io_threads = 1;
+	options.connection_manager_threads = 1; // ignored
+	rpcz::application* application = new rpcz::application(options);
 #ifdef EXAMPLE_WITH_SERVER
-	examples::fserver* s = new examples::fserver(context);
+	examples::fserver* s = new examples::fserver(application);
 	boost::thread thr(boost::bind(&examples::fserver::run, s));
 #endif
 	// client preparation
 	sleep(1);
-	examples::fclient* c = new examples::fclient(context);
+	examples::fclient* c = new examples::fclient(application);
 
 	for(int i=0;i<10000;++i) {
 		c->send("data " + boost::lexical_cast<std::string>(i));
@@ -126,9 +120,10 @@ int main()
 #ifdef EXAMPLE_WITH_SERVER
 	s->stop();
 	thr.join();
-	delete c;
 	delete s;
-	delete context;
 #endif
+	delete c;
+	delete application;
+	delete context;
 }
 
