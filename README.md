@@ -15,7 +15,7 @@ Compile
 
 To Compile and install with headers in /my/location/
 <pre>
-cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/my/location -Drpcz_install_headers=1 -Drpcz_make_examples
+cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/my/location -Drpcz_install_headers=1 -Drpcz_build_examples=1
 make
 make install
 </pre>
