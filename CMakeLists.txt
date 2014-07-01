@@ -6,7 +6,7 @@ endif()
 message("-- Build type: ${CMAKE_BUILD_TYPE}")
 
 option(rpcz_build_tests "Build rpcz's tests." OFF)
-option(rpcz_build_static "Build static library." OFF)
+option(rpcz_build_static "Build static library." ON)
 option(rpcz_build_examples "Build rpcz's examples." OFF)
 
 find_package(ProtobufPlugin REQUIRED)

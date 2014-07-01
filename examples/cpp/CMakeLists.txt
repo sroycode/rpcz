@@ -13,3 +13,6 @@ target_link_libraries(example_client rpcz example_pb)
 
 add_executable(example_server example_server.cc)
 target_link_libraries(example_server rpcz example_pb)
+
+add_executable(example_clientserver example_clientserver.cc)
+target_link_libraries(example_clientserver rpcz example_pb)
