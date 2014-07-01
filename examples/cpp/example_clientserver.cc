@@ -118,14 +118,15 @@ int main()
 #endif
 	// client preparation
 	sleep(1);
-	examples::fclient c(context);
+	examples::fclient* c = new examples::fclient(context);
 
 	for(int i=0;i<10000;++i) {
-		c.send("data " + boost::lexical_cast<std::string>(i));
+		c->send("data " + boost::lexical_cast<std::string>(i));
 	}
 #ifdef EXAMPLE_WITH_SERVER
 	s->stop();
 	thr.join();
+	delete c;
 	delete s;
 	delete context;
 #endif
