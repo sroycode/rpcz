@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// S Roychowdhury <sroycode@gmail.com>
+// Author: S Roychowdhury <sroycode@gmail.com>
 
 #include <iostream>
 #include <boost/lexical_cast.hpp>
@@ -23,6 +23,7 @@
 #include "boost/bind.hpp"
 #include "zmq.hpp"
 
+#define EXAMPLE_WITH_SERVER 1
 #define USE_ADDRESS "tcp://127.0.0.1:5555"
 // #define USE_ADDRESS "inproc://thisoneisgood"
 
@@ -47,6 +48,7 @@ class SearchServiceImpl : public SearchService {
 class fclient {
 private:
 	rpcz::application* application;
+	rpcz::rpc_channel* channel;
 public:
 	fclient(zmq::context_t* context) {
 		rpcz::application::options options;
@@ -54,20 +56,20 @@ public:
 		options.zeromq_io_threads = 1;
 		options.connection_manager_threads = 1; // ignored
 		application = new rpcz::application(options);
+  	channel = application->create_rpc_channel(USE_ADDRESS);
 	}
 	~fclient() {
+		delete channel;
 		delete application;
 	}
 	void send(std::string inss) {
 		try {
-  		google::protobuf::scoped_ptr<rpcz::rpc_channel> channel(application->create_rpc_channel(USE_ADDRESS));
-			examples::SearchService_Stub search_stub(channel.get(),false);
+			examples::SearchService_Stub search_stub(channel,false);
 			examples::SearchRequest request;
 			examples::SearchResponse response;
 			request.set_query(inss);
 			search_stub.Search(request, &response, 1000);
 			std::cerr << response.DebugString() << std::endl;
-			channel.release();
 		} catch (rpcz::rpc_error &e) {
 			std::cerr << "SEND Error: " << e.what() << std::endl;;
 		} catch (std::exception &e) {
@@ -110,8 +112,10 @@ int main()
 {
 
 	zmq::context_t* context = new zmq::context_t(2);
+#ifdef EXAMPLE_WITH_SERVER
 	examples::fserver* s = new examples::fserver(context);
 	boost::thread thr(boost::bind(&examples::fserver::run, s));
+#endif
 	// client preparation
 	sleep(1);
 	examples::fclient c(context);
@@ -119,9 +123,11 @@ int main()
 	for(int i=0;i<10000;++i) {
 		c.send("data " + boost::lexical_cast<std::string>(i));
 	}
+#ifdef EXAMPLE_WITH_SERVER
 	s->stop();
 	thr.join();
 	delete s;
 	delete context;
+#endif
 }
 
